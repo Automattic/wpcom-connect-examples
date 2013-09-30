@@ -1,11 +1,11 @@
-wpcom-connect-examples
+WordPress.com Connect Examples
 ======================
 
 Code Examples for Implementing WordPress.com Connect
 
 ### Instructions
 
-These examples require minor changes to get working. The full instructions for getting a php app running are [on developer.wordpress.com](http://developer.wordpress.com/docs/wpcc/).
+These examples require minor changes to get working. The full instructions for getting a php app running are on [developer.wordpress.com](http://developer.wordpress.com/docs/wpcc/).
 
 These instructions assume you know how to run a website for your chosen framework: php (start a webserver), node.js (run npm install), etc.
 
@@ -29,4 +29,3 @@ Storing and using the access token is an exercise left for the developer.
 ### Where is Framework X?
 
 If you implement a framework we don't have, we'd love to include it in this project. Just submit a pull request.
-
