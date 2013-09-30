@@ -23,6 +23,7 @@ if ( isset( $_GET[ 'code' ] ) ) {
   $auth = curl_exec( $curl );
   $secret = json_decode( $auth );
 
+	//TODO: in real app, store the returned token
 	echo "Connection successful!";
 }
 

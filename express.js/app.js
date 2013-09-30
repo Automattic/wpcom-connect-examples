@@ -65,6 +65,7 @@ app.get('/connected', function(req, res) {
 			post_data,
 			function _callback(error, response, body) {
 				if (!error && response.statusCode == 200) {
+					//TODO: in real app, store the returned token
 		 			res.end('Connected to Trafalgar Square!');
 				} else {
 		 			res.end('ERROR: ' + body);
