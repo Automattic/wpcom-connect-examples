@@ -24,6 +24,7 @@ Storing and using the access token is an exercise left for the developer.
 | PHP           | N/A             | [Automattic](http://automattic.com) |
 | Javascript    | Node.js Express | [Automattic](http://automattic.com) |
 | Python        | Flask           | [Automattic](http://automattic.com) |
+| Python        | web2py          | [Joe Dorocak](http://JoeCodeswell.com) |
 
 
 ### Where is Framework X?
