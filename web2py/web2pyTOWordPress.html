@@ -1,0 +1,158 @@
+<h1>web2py TO WordPress</h1>
+<p>This is a version of a WordPress.com Post documenting this work.<br/>
+The Post should more up to date than this file.<br/>
+The Post is available at:<br/>
+<a href="http://joecodeswell.wordpress.com/2014/05/02/web2py-to-wordpress-api-with-oauth2/?">http://joecodeswell.wordpress.com/2014/05/02/web2py-to-wordpress-api-with-oauth2/</a><br/>
+Love and peace,<br/>
+Joe
+</p>
+<h2>controllers</h2>
+<h3>default.py</h3>
+<pre><code>``` python
+
+import gluon.contrib.simplejson as simplejson
+import datetime, random, string
+import urllib, urllib2
+import requests
+
+# TODO: Replace these globals with your own.
+HOST      = 'yoursite.com'        # REGISTER with developer.wordpress.com
+APPNAME   = 'yourappname'         # REGISTER with developer.wordpress.com
+CLIENT_SECRET = 'BIG.LONG.STRING' # GET FROM developer.wordpress.com
+CLIENT_ID = '12345'               # GET FROM developer.wordpress.com
+
+
+def authorize_blog():
+    """
+    Initiates retrieval of OAuth2 credentials which 
+        allows your user to aurhorize her blog for use by your app.   
+    Generates an HTML page containing a WordPress Authorize button which 
+        holds a redirect_uri callback to your app.
+    When your user presses this button, she is sent to WordPress.com, where,
+        IF she AUTHORIZES one of her blogs:
+            WordPress.com will send OAuth2 credentials to YOUR callback URL.   
+    see: http://developer.wordpress.com/docs/oauth2/            
+    """
+
+    # see [OAuth2 state Article on stackoverflow] (http://stackoverflow.com/questions/11071482/oauth2-0-server-stack-how-to-use-state-to-prevent-csrf-for-draft2-0-v20)
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(30))
+    state = str(datetime.datetime.now()).replace(':', '.').replace(' ', '') + '_' + state
+    session.state = state
+
+
+    params = {
+        "response_type": "code",
+        "client_id": CLIENT_ID,
+        "redirect_uri": URL(f='connected', scheme='http', host=HOST, url_encode=False),
+        "state": state,
+    }
+
+    authorize_url_0 = URL(a='oauth2', c='authorize', f='', vars=params, scheme='https', host='public-api.wordpress.com', url_encode=False)
+
+    # The web2py URL function inserts an (in this case) UNNEEDED reference to the current web2py app.
+    #     This string function gets rid of that reference. 
+    authorize_url =  authorize_url_0.replace(APPNAME+'/', '',1)
+
+    thehtml = XML(
+        '&lt;html&gt;&lt;body&gt;&lt;h2&gt;Connect FROM YourWebsite.com TO WordPress.com&lt;/h2&gt;&lt;a href="' +
+        authorize_url +
+        '"&gt;&lt;img src="//s0.wp.com/i/wpcc-button.png" width="231" /&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;'
+    ).xml()
+
+    return thehtml
+
+def connected():
+    """
+    1. Receive request.vars.code == a "time-limited code that your application can exchange for a full authorization token."
+    see: http://developer.wordpress.com/docs/oauth2/   
+        This is a time-limited code that your application can exchange for a full authorization token. 
+        To do this you will need to pass the code to the token endpoint by making a POST request to the token endpoint: 
+            You are required to pass 
+                client_id, 
+                client_secret, and 
+                redirect_uri for web applications. 
+                    These parameters have to match the details for your application, and 
+                        the redirect_uri must match the redirect_uri used during the Authorize step (above). 
+                grant_type has to be set to "authorization_code".   
+    2. Convert time-limited code into  OAuth2 full authorization credentials.
+        [NOT SHOWN: how to store credentials in db]    
+    3. For demo purposes, list the blog with the credentials.    
+    """
+
+    # 1. Receive request.vars.code
+    code = request.vars.code   # returned from WordPress.com
+    if not code:
+        redirect(URL('index'))
+
+    # see [OAuth2 state Article on stackoverflow] (http://stackoverflow.com/questions/11071482/oauth2-0-server-stack-how-to-use-state-to-prevent-csrf-for-draft2-0-v20)    
+    state = request.vars.state
+    if not state:
+        return dict(message='Warning! State variable missing after authorization.')
+
+    if (not session.state):
+        return dict(message='Warning! No session.atate! WHY NOT??? variable missing after authorization.')
+
+    if state != session.state:
+        return dict(message='Warning! State mismatch. Authorization attempt may have been compromised. This: ' + state + ' should be: ' + session.state)
+
+
+    # 2. Convert time-limited code
+    # TODO: Replace values client_id, client_secret with YOUR's, previously received from dev.WordPress.com setup.
+    payload = { 'client_id': CLIENT_ID, 
+                'client_secret': 'YOUR.CLIENT.SECTET',
+                'redirect_uri': 'http://YOUR_WEBSITE.com/YOUR_APPNAME/default/connected',
+                'grant_type': 'authorization_code',
+                'code': request.vars.code,
+    }
+
+    # Call the token endpoint
+    rsp_token_request = requests.post("https://public-api.wordpress.com/oauth2/token", data=payload)
+
+    # 'Response [200]' means SUCCESS
+    if not 'Response [200]' in str(rsp_token_request):     
+        return dict(message='Problem! "Response [200]" not in response!')
+
+    jsonDict     = rsp_token_request.json()
+
+    access_token = jsonDict['access_token']
+    blog_id      = jsonDict['blog_id']
+    blog_url     = jsonDict['blog_url']
+
+    # TODO: [NO SHOWN] Store access_token, blog_id, blog_url in the db for further use.
+
+    # For demo purposes, we will use these credentials here, to list this blog.
+    base_url = 'https://public-api.wordpress.com/rest/v1/sites/' + blog_id
+    payload = {}
+    payload['http_envelope'] = 'true'
+    url_values = urllib.urlencode(payload)
+    full_url = base_url + '?' + url_values
+    req = urllib2.Request(full_url)   
+    req.add_header('Authorization', 'Bearer ' + access_token)
+    rsp = urllib2.urlopen(full_url)
+    the_info_page = rsp.read()
+
+    m = ''    
+    m += "the_info_page = %s||"%(the_info_page)
+
+    content = BEAUTIFY(m.split('||'))
+
+    return dict(content=content)
+
+```
+</code></pre>
+<h2>models</h2>
+<p>I omit model code in this article, assuming you can store your credentials for further use. If you needd assistance, contact me by a comment.</p>
+<h2>views/default</h2>
+<h3>connected.html</h3>
+<pre><code>``` html
+
+{{left_sidebar_enabled,right_sidebar_enabled=False,False}}
+{{extend 'layout.html'}}
+
+{{if 'content' in globals():}}
+&lt;h3&gt;{{=content}}&lt;/h3&gt;
+{{pass}}
+
+
+```
+</code></pre>
