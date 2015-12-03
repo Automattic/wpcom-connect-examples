@@ -5,7 +5,8 @@ require_once dirname( __FILE__ ) . '/defines.php';
 // Track a random state value in the session to ensure we're talking to the
 // same user after they return
 session_start();
-$_SESSION[ 'wpcc_state' ] = md5( mt_rand() );
+$wpcc_state = md5( mt_rand() );
+$_SESSION[ 'wpcc_state' ] = $wpcc_state;
 
 // To authenticate the user, we generate a URL including the query parameters
 // describing our application. When the visitor clicks this link, they'll be
