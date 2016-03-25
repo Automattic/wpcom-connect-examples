@@ -1,6 +1,5 @@
 var express = require('express');
 var app = express();
-var jQuery = require('jquery');
 var request = require('request');
 
 var crypto = require('crypto');
@@ -30,7 +29,11 @@ app.get('/', function(req, res) {
 		"state": state,
 		"redirect_uri": wpcc_consts.redirect_url
 	};
-	var wpcc_url = wpcc_consts.authenticate_url + '?' + jQuery.param(params);
+	var URLparams = new Array();
+	for ( param in params ) {
+		URLparams.push( param + '=' + params[param] );
+	}
+	var wpcc_url = wpcc_consts.authenticate_url + '?' + URLparams.join('&');
 
 	var body = '<html>';
 	body += '<body>';
@@ -49,7 +52,8 @@ app.get('/connected', function(req, res) {
 			return;
 		}
 		if ( req.query.state != req.session.wpcc_state ) {
-			res.end( 'Warning! State mismatch. Authentication attempt may have been compromised.' )			return;
+			res.end( 'Warning! State mismatch. Authentication attempt may have been compromised.' )
+			return;
 		}
 
 		var post_data = { "form" : {
