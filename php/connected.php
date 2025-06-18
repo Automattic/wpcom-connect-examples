@@ -38,4 +38,6 @@ $secret = json_decode($auth);
 
 // TODO: In a real app, you'll likely want to store the returned token so that
 // you can continue to make authenticated requests.
+echo 'Access Token: <mark><code>' . $secret->access_token . '</code></mark><br>';
+echo 'This token can be used to request more info about the user to the endpoint: <a href="https://developer.wordpress.com/docs/api/1.1/get/me" target="_blank">https://developer.wordpress.com/docs/api/1.1/get/me</a><br>';
 echo 'Connection successful!';

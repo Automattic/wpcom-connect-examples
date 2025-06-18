@@ -11,7 +11,11 @@ These instructions assume you know how to run a website for your chosen framewor
 
 1. Log in to [WordPress.com](http://wordpress.com)
 2. Create a new WPCC application: [developer.wordpress.com/apps/](https://developer.wordpress.com/apps/). You can change these settings at any time.
-3. Search for TODO in all the files for your particular framework, and adjust them as appropriate.
+3. Adjust the following values (in the proper config file) to match the ones in your WPCC application:
+   - Client ID
+   - Client Secret
+   - Login URL 
+   - Redirect URL 
 4. Start your server and log in.
 5. Profit!
 

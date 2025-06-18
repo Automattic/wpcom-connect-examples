@@ -83,7 +83,11 @@ app.get('/connected', (req, res) => {
       (error, response, body) => {
         if (!error && response.statusCode === 200) {
           // TODO: In a real app, store the returned token securely
-          res.status(200).send('Connected to WordPress.com!');
+          const secret = JSON.parse(body);
+          const html = `Access Token: <mark><code>${secret.access_token}</code></mark><br>
+This token can be used to request more info about the user to the endpoint: <a href="https://developer.wordpress.com/docs/api/1.1/get/me" target="_blank">https://developer.wordpress.com/docs/api/1.1/get/me</a><br>
+Connection successful!`;
+          res.status(200).send(html);
         } else {
           // Avoid leaking sensitive info in production
           res.status(response ? response.statusCode : 500).send('ERROR: ' + (body || error.message));

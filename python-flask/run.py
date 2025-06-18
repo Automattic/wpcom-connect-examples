@@ -71,7 +71,15 @@ def connected():
         token_data = r.json()
         access_token = token_data.get('access_token', 'No token found')
         resp = make_response(
-            f'<html><body><h2>Connected to WordPress.com!</h2><p><strong>Access Token:</strong> {access_token}</p></body></html>')
+            f'<html><body>'
+            f'<h2>Connected to WordPress.com!</h2>'
+            f'<p><strong>Access Token:</strong> '
+            f'<span style="background-color: yellow">{access_token}</span></p>'
+            f'<p>This token can be used to request more info about the user to the endpoint: '
+            f'<a href="https://developer.wordpress.com/docs/api/1.1/get/me" target="_blank">https://developer.wordpress.com/docs/api/1.1/get/me</a></p>'
+            f'<p>Connection successful!</p>'
+            f'</body></html>'
+        )
         resp.set_cookie('wpcc_state', '', expires=0)
         return resp
 

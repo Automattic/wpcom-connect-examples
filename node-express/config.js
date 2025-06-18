@@ -7,5 +7,5 @@ module.exports = {
   login_url: "http://localhost:3000/", //TODO
   redirect_url: "http://localhost:3000/connected", //TODO
   request_token_url: "https://public-api.wordpress.com/oauth2/token",
-  authenticate_url: "https://public-api.wordpress.com/oauth2/authenticate"
+  authenticate_url: "https://public-api.wordpress.com/oauth2/authenticate",
 };

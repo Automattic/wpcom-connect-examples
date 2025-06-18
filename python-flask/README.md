@@ -9,7 +9,7 @@ This is an example Flask application demonstrating how to connect with WordPress
    cd flask
    ```
 
-2. **(Recommended) Create and activate a virtual environment:**
+2. **Create and activate a virtual environment:**
    ```sh
    python3 -m venv venv
    source venv/bin/activate
