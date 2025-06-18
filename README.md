@@ -17,15 +17,15 @@ These instructions assume you know how to run a website for your chosen framewor
 
 Storing and using the access token is an exercise left for the developer.
 
-### Current Frameworks
+### Current Demos
 
-| Language      | Framework       | Author                              |
-| ------------- |-----------------|-------------------------------------|
-| PHP           | N/A             | [Automattic](http://automattic.com) |
-| Javascript    | Node.js Express | [Automattic](http://automattic.com) |
-| Python        | Flask           | [Automattic](http://automattic.com) |
+| Demo                            | Language   | Framework       | Description                       | Author                              |
+|---------------------------------|------------|-----------------|-----------------------------------|-------------------------------------|
+| [`/php`](php)                   | PHP        | N/A             | Auth via wp.com and token display | [Automattic](http://automattic.com) |
+| [`/node-express`](node-express) | Javascript | Node.js Express | Auth via wp.com and token display | [Automattic](http://automattic.com) |
+| [`/python-flask`](python-flask) | Python     | Flask           | Auth via wp.com and token display | [Automattic](http://automattic.com) |
 
 
-### Where is Framework X?
+### Where is the demo for Framework X?
 
 If you implement a framework we don't have, we'd love to include it in this project. Just submit a pull request.
