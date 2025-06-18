@@ -1,90 +1,102 @@
-var express = require('express');
-var app = express();
-var request = require('request');
+require('dotenv').config();
+const express = require('express');
+const request = require('request');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const crypto = require('crypto');
+const wpcc_consts = require('./config.js');
 
-var crypto = require('crypto');
-app.use(express.cookieParser());
+const app = express();
+const session_secret = process.env.SESSION_SECRET || 'FixMeBuildBetterSecretThanThis';
 
-//TODO: session secret, unique to your application
-var session_secret = "FixMeBuildBetterSecretThanThis";
+app.use(cookieParser());
+app.use(
+  session({
+    secret: session_secret,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { httpOnly: true, secure: false }, // Set secure: true if using HTTPS
+  })
+);
 
-var wpcc_consts = {
-	"client_id": 1234, //TODO
-	"client_secret": "Your WP.com Secret", //TODO
-	"login_url": "http://localhost:3000/", //TODO
-	"redirect_url": "http://localhost:3000/connected", //TODO
-	"request_token_url": "https://public-api.wordpress.com/oauth2/token",
-	"authenticate_url": "https://public-api.wordpress.com/oauth2/authenticate"
+// Helper to build query string
+function buildQuery(params) {
+  return Object.entries(params)
+    .map(([key, val]) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
+    .join('&');
 }
 
-app.use(express.session({secret: session_secret}));
+app.get('/', (req, res) => {
+  // Generate a cryptographically secure random state
+  const state = crypto.randomBytes(16).toString('hex');
+  req.session.wpcc_state = state;
 
-app.get('/', function(req, res) {
-	var state = crypto.createHash('md5').digest("hex");
-	req.session.wpcc_state = state;
-	
-	var params = { 
-		"response_type": "code", 
-		"client_id": wpcc_consts.client_id, 
-		"state": state,
-		"redirect_uri": wpcc_consts.redirect_url
-	};
-	var URLparams = new Array();
-	for ( param in params ) {
-		URLparams.push( param + '=' + params[param] );
-	}
-	var wpcc_url = wpcc_consts.authenticate_url + '?' + URLparams.join('&');
+  const params = {
+    response_type: 'code',
+    client_id: wpcc_consts.client_id,
+    state,
+    redirect_uri: wpcc_consts.redirect_url,
+  };
+  const wpcc_url = `${wpcc_consts.authenticate_url}?${buildQuery(params)}`;
 
-	var body = '<html>';
-	body += '<body>';
-  body += '<h2>Connect to Trafalgar Square</h2>';
-	body += '<a href="' + wpcc_url +'"><img src="//s0.wp.com/i/wpcc-button.png" width="231" /></a>';
-	body += '</body>';
-	body += '</html>';
+  const body = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect to WordPress.com</title>
+</head>
+<body>
+  <h2>Connect to WordPress.com</h2>
+  <a href="${wpcc_url}"><img src="//s0.wp.com/i/wpcc-button.png" width="231" alt="Connect with WordPress.com" /></a>
+</body>
+</html>`;
 
-  res.end(body);
+  res.status(200).send(body);
 });
 
-app.get('/connected', function(req, res) {
-	if ( req.query.code ) {
-		if ( ! req.query.state ) {
-			res.end( 'Warning! State variable missing after authentication' );
-			return;
-		}
-		if ( req.query.state != req.session.wpcc_state ) {
-			res.end( 'Warning! State mismatch. Authentication attempt may have been compromised.' )
-			return;
-		}
+app.get('/connected', (req, res) => {
+  const { code, state } = req.query;
+  if (code) {
+    if (!state) {
+      res.status(400).send('Warning! State variable missing after authentication');
+      return;
+    }
+    if (state !== req.session.wpcc_state) {
+      res.status(400).send('Warning! State mismatch. Authentication attempt may have been compromised.');
+      return;
+    }
 
-		var post_data = { "form" : {
-			"client_id" : wpcc_consts.client_id,
-			"redirect_uri" : wpcc_consts.redirect_url,
-			"client_secret" : wpcc_consts.client_secret,
-			"code" : req.query.code, // The code from the previous request
-			"grant_type" : 'authorization_code'
-		} };
+    const post_data = {
+      form: {
+        client_id: wpcc_consts.client_id,
+        redirect_uri: wpcc_consts.redirect_url,
+        client_secret: wpcc_consts.client_secret,
+        code,
+        grant_type: 'authorization_code',
+      },
+    };
 
-		request.post(
-			wpcc_consts.request_token_url,
-			post_data,
-			function _callback(error, response, body) {
-				if (!error && response.statusCode == 200) {
-					//TODO: in real app, store the returned token
-		 			res.end('Connected to Trafalgar Square!');
-				} else {
-		 			res.end('ERROR: ' + body);
-				}
-			}
-		);
-	} else {
-		//redirect errors or cancelled requests back to login page
-		res.writeHead( 303, {
-			'Location': wpcc_consts.login_url
-		});
-		res.end();
-	}
-
+    request.post(
+      wpcc_consts.request_token_url,
+      post_data,
+      (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          // TODO: In a real app, store the returned token securely
+          res.status(200).send('Connected to WordPress.com!');
+        } else {
+          // Avoid leaking sensitive info in production
+          res.status(response ? response.statusCode : 500).send('ERROR: ' + (body || error.message));
+        }
+      }
+    );
+  } else {
+    // Redirect errors or cancelled requests back to login page
+    res.redirect(303, wpcc_consts.login_url);
+  }
 });
 
-app.listen(3000);
-console.log('Listening on port 3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
+});
